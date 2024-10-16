@@ -1,38 +1,63 @@
-/**
- * First we will load all of this project's JavaScript dependencies which
- * includes Vue and other libraries. It is a great starting point when
- * building robust, powerful web applications using Vue and Laravel.
- */
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './bootstrap';
 import { createApp } from 'vue';
 import ExampleComponent from './components/ExampleComponent.vue';
-/**
- * Next, we will create a fresh Vue application instance. You may then begin
- * registering components with the application instance so they are ready
- * to use in your application's views. An example is included for you.
- */
+import Register from './components/Register.vue';
+import Login from './components/Login.vue';
 
-const app = createApp({});
-
-app.component('example-component', ExampleComponent);
-
-/**
- * The following block of code may be used to automatically register your
- * Vue components. It will recursively scan this directory for the Vue
- * components and automatically register them with their "basename".
- *
- * Eg. ./components/ExampleComponent.vue -> <example-component></example-component>
- */
-
-// Object.entries(import.meta.glob('./**/*.vue', { eager: true })).forEach(([path, definition]) => {
-//     app.component(path.split('/').pop().replace(/\.\w+$/, ''), definition.default);
-// });
-
-/**
- * Finally, we will attach the application instance to a HTML element with
- * an "id" attribute of "app". This element is included with the "auth"
- * scaffolding. Otherwise, you will need to add an element yourself.
- */
-
+const app = createApp({
+    data() {
+      return {
+        user: null, // Store the logged-in user here
+        role: null, // Store the user's role (USER, LGU, ADMIN)
+      };
+    },
+    methods: {
+      // Function to check login state
+      async checkLogin() {
+        try {
+          // Send a request to check if the user is logged in (optional)
+          const response = await axios.get('/api/user');
+          this.user = response.data.user;
+          this.role = response.data.role;
+        } catch (error) {
+          console.log('Not logged in.');
+        }
+      },
+      // Function to log in the user
+      async loginUser(credentials) {
+        try {
+          const response = await axios.post('/api/login', credentials);
+          this.user = response.data.user; // Assign the logged-in user
+          this.role = response.data.role; // Get the user role
+  
+          // Redirect user based on their role
+          if (this.role === 'ADMIN') {
+            window.location.href = '/admin-dashboard';
+          } else if (this.role === 'LGU') {
+            window.location.href = '/lgu-dashboard';
+          } else {
+            window.location.href = '/user-dashboard';
+          }
+        } catch (error) {
+          console.error('Login failed', error);
+        }
+      },
+      // Function to log out the user
+      async logoutUser() {
+        await axios.post('/api/logout');
+        this.user = null;
+        this.role = null;
+        window.location.href = '/'; // Redirect to home or login page
+      },
+    },
+    mounted() {
+      // Check login state on page load
+      this.checkLogin();
+    },
+  });
+  
+// app.component('example-component', ExampleComponent);
+app.component('new-user', Register);
+app.component('login-user', Login);
 app.mount('#app');
